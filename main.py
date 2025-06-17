@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -33,6 +35,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -86,6 +91,11 @@ class GenerateResponse(BaseModel):
 
 # Initialize headline generator
 headline_generator = HeadlineGenerator()
+
+@app.get("/")
+async def read_root():
+    """Serve the main page"""
+    return FileResponse('static/index.html')
 
 @app.get("/health")
 @limiter.limit("30/minute")
