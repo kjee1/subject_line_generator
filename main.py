@@ -68,8 +68,8 @@ class Constraints(BaseModel):
 
 class HeadlineRequest(BaseModel):
     newsletter_text: str = Field(..., min_length=1)
-    audience_profile: str = Field(..., min_length=1)
-    goal: str = Field(..., min_length=1)
+    audience_profile: Optional[str] = Field(default="")
+    goal: Optional[str] = Field(default="")
     tone: str = Field(..., min_length=1)
     past_headlines: List[str] = Field(default_factory=list)
     constraints: Constraints = Field(default_factory=Constraints)
@@ -150,4 +150,4 @@ def generate_headlines(request: Request, body: HeadlineRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run("main:app", host="0.0.0.0", port=3000, reload=True) 

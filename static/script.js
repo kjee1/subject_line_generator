@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = {
             newsletter_text: document.getElementById('newsletterText').value,
-            audience_profile: document.getElementById('audienceProfile').value,
-            goal: document.getElementById('goal').value,
+            audience_profile: document.getElementById('audienceProfile').value || "",
+            goal: document.getElementById('goal').value || "",
             tone: document.getElementById('tone').value,
             provider: document.getElementById('provider').value,
             model: document.getElementById('provider').value === 'openai' ? 'gpt-4' : 
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
+            console.log('Sending request with data:', formData);
             const response = await fetch('/generate', {
                 method: 'POST',
                 headers: {
@@ -37,11 +38,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(formData)
             });
 
+            console.log('Response status:', response.status);
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}, message: ${responseText}`);
             }
 
-            const data = await response.json();
+            const data = JSON.parse(responseText);
+            console.log('Parsed response data:', data);
+            
+            if (!data.headlines || !Array.isArray(data.headlines)) {
+                throw new Error('Invalid response format: missing headlines array');
+            }
+
             displayResults(data.headlines);
         } catch (error) {
             console.error('Error:', error);
@@ -58,6 +69,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function displayResults(headlines) {
+        if (!headlines || headlines.length === 0) {
+            headlinesList.innerHTML = `
+                <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+                    <strong class="font-bold">No headlines generated.</strong>
+                    <span class="block sm:inline"> Please try again with different input.</span>
+                </div>
+            `;
+            return;
+        }
+
         headlinesList.innerHTML = headlines.map(headline => `
             <div class="bg-white rounded-lg shadow-md p-6 headline-card">
                 <h3 class="text-xl font-semibold text-gray-800 mb-3">${headline.title}</h3>
